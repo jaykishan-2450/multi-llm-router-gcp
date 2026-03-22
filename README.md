@@ -79,6 +79,7 @@ A multi-agent AI system that intelligently routes queries to specialized sub-age
 ```bash
 git clone https://github.com/YOUR_USERNAME/multi-agent-router.git
 cd multi-agent-router
+
 2. Create Virtual Environment
 Bash
 
@@ -89,10 +90,12 @@ python -m venv venv
 
 # Mac/Linux
 source venv/bin/activate
+
 3. Install Dependencies
 Bash
 
 pip install -r requirements.txt
+
 4. Set API Keys
 Bash
 
@@ -103,6 +106,7 @@ $env:GEMINI_API_KEY = "your_gemini_key_here"
 # Mac/Linux
 export GROQ_API_KEY="gsk_your_groq_key_here"
 export GEMINI_API_KEY="your_gemini_key_here"
+
 5. Run
 Bash
 
@@ -120,6 +124,8 @@ multi-agent-router/
 ├── requirements.txt    # Dependencies
 ├── .gitignore          # Excludes venv, cache, env files
 └── README.md           # This file
+
+
 🧪 Test Queries
 #	Query	Expected Agent	Expected Tier
 1	What is 25 * 48?	Math	🟢 Lite
@@ -165,6 +171,8 @@ Simple Query → Lite Tier
 │ Fallback: Groq 8B   │──── Success ──→ Return response
 │                      │                 + Error displayed in UI
 └─────────────────────┘
+
+
 ☁️ Deployment (Streamlit Cloud)
 Push code to GitHub
 Go to share.streamlit.io
@@ -176,11 +184,15 @@ toml
 GROQ_API_KEY = "gsk_your_key"
 GEMINI_API_KEY = "your_key"
 Deploy → Get shareable URL
+
+
 🛠️ Tech Stack
 Streamlit — UI Framework
 LiteLLM — Unified LLM API (100+ providers)
 Groq — Ultra-fast LLM inference (LLaMA models)
 Google Gemini — Gemini Flash-Lite for lightweight tasks
+
+
 🔮 Future Improvements
  Multi-turn conversation memory
  Additional agents (web search, summarizer, code executor)
