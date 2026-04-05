@@ -1,8 +1,9 @@
 """
-Three-layer guardrail system.
-Layer 1: INPUT  — Block bad queries before LLM call
-Layer 2: OUTPUT — Scan responses after LLM call
-Layer 3: SYSTEM — Rate limits, cost ceiling
+Three-layer guardrail system for safety and cost control.
+
+Layer 1: INPUT  — Block bad queries before LLM call (injection, PII, rate limit)
+Layer 2: OUTPUT — Scan responses after LLM call (safety, quality)
+Layer 3: SYSTEM — Cost ceiling and daily budget enforcement
 """
 
 import re
@@ -16,7 +17,17 @@ _daily_reset = datetime.date.today()
 
 
 def check_input(query: str) -> dict:
-    """Layer 1: Validate input query."""
+    """Layer 1: Validate user input before LLM processing.
+    
+    Checks:
+    - Length: Truncate if exceeds max_query_length (5000 chars)
+    - Prompt Injection: Block if contains jailbreak phrases
+    - PII: Detect email, phone, SSN, credit card and warn user
+    - Rate Limit: Block if > max requests per minute (20 req/min)
+    
+    Returns:
+        {"ok": bool, "clean_query": str, "warnings": [str], "reason": str|None}
+    """
     warnings = []
     clean = query.strip()
 
@@ -63,7 +74,16 @@ def check_input(query: str) -> dict:
 
 
 def check_output(response: str, agent_type: str) -> list:
-    """Layer 2: Scan LLM response for issues."""
+    """Layer 2: Scan LLM response for safety & quality issues.
+    
+    Checks:
+    - Min Length: Warn if response too short (< 10 chars)
+    - Dangerous Code: Flag dangerous patterns if coding agent (os.system, eval, DROP TABLE)
+    - Uncertainty: Detect if model expressed doubt ("not sure", "cannot verify")
+    
+    Returns:
+        List of warning messages (empty if no issues)
+    """
     warnings = []
 
     if not response or len(response.strip()) < GUARDRAIL_CONFIG["min_response_length"]:
@@ -85,7 +105,14 @@ def check_output(response: str, agent_type: str) -> list:
 
 
 def track_cost(cost: float) -> dict:
-    """Layer 3: Track daily cost."""
+    """Layer 3: Track daily API cost and enforce ceiling.
+    
+    Accumulates cost per day, resets at midnight UTC.
+    Alerts user if daily_cost exceeds ceiling ($5/day).
+    
+    Returns:
+        {"daily_total": float, "ceiling": float, "exceeded": bool, ...}
+    """
     global _daily_cost, _daily_reset
     today = datetime.date.today()
     if today != _daily_reset:

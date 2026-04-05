@@ -18,10 +18,10 @@ A multi-agent AI system that intelligently routes queries to specialized sub-age
                            │
                            ▼
            ┌───────────────────────────────┐
-           │      🧠 DEEP AGENT (Router)   │
-           │    groq/llama-3.1-8b-instant   │
+           │     🧠 ROUTER (Classify)      |
+           │  Vertex Gemini 2.5 Flash lite │
            │                               │
-           │  Classifies:                  │
+           │  Determines:                  │
            │  1. Agent (coding/math/reason)│
            │  2. Complexity (simple/med/cx)│
            │  3. Model Tier (lite/std/pro) │
@@ -37,39 +37,42 @@ A multi-agent AI system that intelligently routes queries to specialized sub-age
                     │
                     ▼ (Dynamic Model Selection)
      ┌──────────────────────────────────────┐
-     │ 🟢 Simple  → Gemini Flash-Lite       │
-     │              (fallback: Groq 8B)     │
-     │ 🟠 Medium  → Groq LLaMA 8B          │
-     │ 🔴 Complex → Groq LLaMA 70B         │
+     │ 🟢 Lite  → Gemini 2.5 Flash-Lite    │
+     │           (fallback: Gemini 2.5)    │
+     │ 🟠 Standard → Gemini 2.5 Flash      │
+     │             (fallback: Gemini 2.5)   │
+     │ 🔴 Pro  → Gemini 2.5 Pro            │
+     │           (fallback: Gemini 2.5)     │
      └──────────────────────────────────────┘
                     │
                     ▼
      ┌──────────────────────────────────────┐
-     │  📊 Response + Metrics + Comparison  │
+     │  📊 Response + Metrics + Guardrails  │
+     │  Latency, Tokens, Cost, Safety      │
      └──────────────────────────────────────┘
 
 ---
 
 ## ✨ Key Features
 
-- **🤖 Intelligent Routing** — Deep Agent classifies every query and picks the right sub-agent + model automatically
-- **💰 Cost Optimization** — Simple tasks use cheap models, complex tasks get powerful models
-- **⚡ Dynamic Model Selection** — Model tier decided at runtime, not hardcoded
-- **🔄 Fallback Strategy** — If Gemini fails (rate limit), automatically falls back to Groq with error visibility
-- **📊 Full Observability** — Latency, token usage, cost comparison shown for every query
-- **🎯 3 Specialized Agents** — Coding, Reasoning, and Math each with optimized system prompts
+- **🤖 Intelligent Routing** — Router classifies every query and picks the right sub-agent + model tier automatically
+- **💰 Cost Optimization** — Simple tasks use lite models (cheap), complex tasks get pro models (powerful)
+- **⚡ Dynamic Model Selection** — Model tier decided at runtime based on query complexity
+- **🔄 Fallback Strategy** — If primary model unavailable, automatically falls back to proven stable variant
+- **📊 Full Observability** — Latency, token usage, cost tracking shown for every query
+- **🎯 3 Specialized Agents** — Coding, Reasoning, and Math each with fine-tuned system prompts
+- **🛡️ Multi-Layer Guardrails** — Input validation, PII detection, output safety scanning, rate limiting
 
 ---
 
 ## 📊 Model Tiers
 
-| Tier                 | Model                          | Use Case                                | Cost    |
-| -------------------- | ------------------------------ | --------------------------------------- | ------- |
-| 🟢 **Lite**          | `gemini/gemini-2.5-flash-lite` | Simple tasks (add numbers, basic facts) | Lowest  |
-| 🟢 **Lite Fallback** | `groq/llama-3.1-8b-instant`    | When Gemini rate-limited                | Low     |
-| 🟠 **Standard**      | `groq/llama-3.1-8b-instant`    | Medium tasks (algorithms, comparisons)  | Medium  |
-| 🔴 **Pro**           | `groq/llama-3.3-70b-versatile` | Complex tasks (system design, proofs)   | Highest |
-| 🔧 **Router**        | `groq/llama-3.1-8b-instant`    | Query classification only               | Minimal |
+| Tier                 | Primary Model                    | Fallback Model           | Use Case                         | Cost     |
+| -------------------- | -------------------------------- | ------------------------ | -------------------------------- | -------- |
+| 🟢 **Lite**          | Gemini 2.5 Flash-Lite            | Gemini 2.5 Flash         | Simple tasks (math, facts)       | Lowest   |
+| 🟠 **Standard**      | Gemini 2.5 Flash                 | Gemini 2.5 Flash         | Medium tasks (code, comparisons) | Medium   |
+| 🔴 **Pro**           | Gemini 2.5 Pro (Experimental)    | Gemini 2.5 Pro           | Complex tasks (reasoning, design)| Highest  |
+| 🔧 **Router**        | Gemini 2.5 Flash-lite               | —                        | Query classification only        | Minimal  |
 
 ---
 
@@ -97,16 +100,23 @@ Bash
 
 pip install -r requirements.txt
 
-4. Set API Keys
-Bash
+### 4. Set Up Vertex AI Authentication
 
+You need Google Cloud credentials for Vertex AI. Use Application Default Credentials:
+
+```bash
+# Authenticate with Google Cloud
+gcloud auth application-default login
+
+# OR set VERTEX_PROJECT_ID environment variable
 # Windows PowerShell
-$env:GROQ_API_KEY = "gsk_your_groq_key_here"
-$env:GEMINI_API_KEY = "your_gemini_key_here"
+$env:VERTEX_PROJECT_ID = "your-gcp-project-id"
+$env:VERTEX_LOCATION = "us-central1"
 
 # Mac/Linux
-export GROQ_API_KEY="gsk_your_groq_key_here"
-export GEMINI_API_KEY="your_gemini_key_here"
+export VERTEX_PROJECT_ID="your-gcp-project-id"
+export VERTEX_LOCATION="us-central1"
+```
 
 5. Run
 Bash
@@ -145,11 +155,11 @@ text
 Example: "What is 2 + 2?"
 
 ┌────────────────┬──────────┬──────────┐
-│ Model          │ Cost     │ Latency  │
+│ Model          │ Cost/1k  │ Latency  │
 ├────────────────┼──────────┼──────────┤
-│ 🔴 Pro (70B)   │ $0.00010 │ ~3000ms  │
-│ 🟠 Std (8B)    │ $0.00001 │ ~800ms   │
-│ 🟢 Lite        │ $0.00001 │ ~400ms   │ ← Selected
+│ 🔴 Pro (70B)   │ $0.0001  │ ~3000ms  │
+│ 🟠 Std (8B)    │ $0.0003  │ ~800ms   │
+│ 🟢 Lite        │ $0.00125 │ ~400ms   │ ← Selected
 └────────────────┴──────────┴──────────┘
 
 Savings: ~90% cost, ~85% faster vs Pro
@@ -164,14 +174,7 @@ Simple Query → Lite Tier
 │ Try: Gemini Flash    │──── Success ──→ Return response
 │      Lite            │
 └──────────┬──────────┘
-           │
-       Rate Limit / Error
-           │
-           ▼
-┌─────────────────────┐
-│ Fallback: Groq 8B   │──── Success ──→ Return response
-│                      │                 + Error displayed in UI
-└─────────────────────┘
+
 
 
 ☁️ Deployment (Streamlit Cloud)
@@ -182,16 +185,17 @@ Set app.py as main file
 Add secrets in Advanced Settings:
 toml
 
-GROQ_API_KEY = "gsk_your_key"
-GEMINI_API_KEY = "your_key"
-Deploy → Get shareable URL
+VERTEX_PROJECT_ID = "your-gcp-project-id"
+VERTEX_LOCATION = "us-central1"
+Deploy → Get shareable URL (requires GCP credentials)
 
 
 🛠️ Tech Stack
-Streamlit — UI Framework
-LiteLLM — Unified LLM API (100+ providers)
-Groq — Ultra-fast LLM inference (LLaMA models)
-Google Gemini — Gemini Flash-Lite for lightweight tasks
+Streamlit — UI Framework & real-time updates
+Vertex AI Generative Models — All LLM execution
+Google Cloud — Infrastructure & authentication
+Pandas — Analytics & data processing
+Plotly — Interactive charts & visualizations
 
 
 🔮 Future Improvements

@@ -1,12 +1,34 @@
 """
 Sub-Agent Engine — Sophisticated prompts + automatic fallback.
+Uses Vertex AI Generative Models for execution.
 """
 
 import time
-import litellm
-from config import ALL_MODELS
+from vertexai.generative_models import GenerativeModel, GenerationConfig
+from config import ALL_MODELS, TIER_MAX_OUTPUT_TOKENS
 
-litellm.drop_params = True
+
+def _get_token_counts(response):
+    """Safely extract token counts from Vertex AI response.
+    
+    Vertex AI generative_models.GenerativeModel returns usage_metadata with:
+    - prompt_token_count: input tokens
+    - candidates_token_count: output tokens (from response generation)
+    """
+    if not response or not response.usage_metadata:
+        return 0, 0, 0
+    
+    try:
+        usage = response.usage_metadata
+        # Correct field names for Vertex AI SDK
+        prompt_tokens = getattr(usage, 'prompt_token_count', 0)
+        candidates_tokens = getattr(usage, 'candidates_token_count', 0)
+        
+        total_tokens = prompt_tokens + candidates_tokens
+        return prompt_tokens, candidates_tokens, total_tokens
+    except Exception as e:
+        # If extraction fails, return 0 but log for debugging
+        return 0, 0, 0
 
 AGENT_PROMPTS = {
     "coding": """You are a senior software engineer with 10+ years of experience.
@@ -66,76 +88,77 @@ def run_agent(query: str, agent_type: str, model_key: str) -> dict:
     fallback_used = False
     attempted = cfg["label"]
 
-    # Primary attempt
-    try:
-        start = time.time()
-        response = litellm.completion(
-            model=cfg["model"],
-            api_key=cfg["api_key"],
-            messages=[
-                {"role": "system", "content": prompt},
-                {"role": "user", "content": query},
-            ],
-            temperature=0.3,
-            max_tokens=2048,
-        )
-        latency = (time.time() - start) * 1000
+    full_prompt = f"{prompt}\n\nUser query: {query}"
 
-    except Exception as e:
-        error_msg = str(e)
-        fallback_used = True
+    # Build fallback order: requested key -> same tier -> standard -> lite -> remaining.
+    fallback_order = [model_key]
+    tier = cfg["tier"]
+    fallback_order.extend([k for k, v in ALL_MODELS.items() if v["tier"] == tier and k != model_key])
+    fallback_order.extend(["standard_a", "lite_a"])
+    fallback_order.extend(ALL_MODELS.keys())
 
-        # Fallback: find another model in same tier
-        tier = cfg["tier"]
-        fallback_key = None
-        for k, v in ALL_MODELS.items():
-            if v["tier"] == tier and k != model_key:
-                fallback_key = k
-                break
-        if not fallback_key:
-            fallback_key = "standard_a"
+    # Deduplicate while preserving order.
+    deduped_keys = []
+    for key in fallback_order:
+        if key in ALL_MODELS and key not in deduped_keys:
+            deduped_keys.append(key)
 
-        fb = ALL_MODELS[fallback_key]
+    response = None
+    latency = 0.0
+    errors = []
+    for idx, key in enumerate(deduped_keys):
         try:
             start = time.time()
-            response = litellm.completion(
-                model=fb["model"],
-                api_key=fb["api_key"],
-                messages=[
-                    {"role": "system", "content": prompt},
-                    {"role": "user", "content": query},
-                ],
+            candidate_cfg = ALL_MODELS[key]
+            tier_max_output_tokens = TIER_MAX_OUTPUT_TOKENS.get(candidate_cfg["tier"], 4096)
+            gen_config = GenerationConfig(
                 temperature=0.3,
-                max_tokens=2048,
+                max_output_tokens=tier_max_output_tokens,
+            )
+            model = GenerativeModel(candidate_cfg["model"])
+            response = model.generate_content(
+                contents=full_prompt,
+                generation_config=gen_config,
             )
             latency = (time.time() - start) * 1000
-            cfg = fb
-            model_key = fallback_key
+            cfg = candidate_cfg
+            model_key = key
+            fallback_used = idx > 0
+            break
+        except Exception as e:
+            errors.append(f"{key}: {str(e)}")
 
-        except Exception as e2:
-            error_msg = f"Primary: {error_msg} | Fallback: {str(e2)}"
-            last = ALL_MODELS["lite_b"]
-            start = time.time()
-            response = litellm.completion(
-                model=last["model"],
-                api_key=last["api_key"],
-                messages=[
-                    {"role": "system", "content": prompt},
-                    {"role": "user", "content": query},
-                ],
-                temperature=0.3,
-                max_tokens=2048,
-            )
-            latency = (time.time() - start) * 1000
-            cfg = last
-            model_key = "lite_b"
+    if response is None:
+        # Last-resort controlled response to avoid crashing the app.
+        fallback_used = True
+        error_msg = " | ".join(errors)[:1000] if errors else "Unknown model execution error"
+        return {
+            "response": "I could not generate a response because no configured Vertex AI models are currently accessible for this project.",
+            "model_used": cfg["model"],
+            "model_label": cfg["label"],
+            "model_key": model_key,
+            "tier": cfg["tier"],
+            "provider": cfg["provider"],
+            "agent": agent_type,
+            "latency_ms": 0.0,
+            "prompt_tokens": 0,
+            "completion_tokens": 0,
+            "total_tokens": 0,
+            "estimated_cost": 0.0,
+            "fallback_used": fallback_used,
+            "attempted_model": attempted,
+            "error": error_msg,
+        }
 
-    usage = response.usage
-    total_tokens = usage.total_tokens if usage else 0
+    error_msg = " | ".join(errors)[:1000] if errors else None
+
+    # Extract usage information
+    prompt_tokens, completion_tokens, total_tokens = _get_token_counts(response)
+    
     cost = (total_tokens / 1000) * cfg["cost_per_1k_tokens"]
 
     return {
-        "response": response.choices[0].message.content,
+        "response": response.text,
         "model_used": cfg["model"],
         "model_label": cfg["label"],
         "model_key": model_key,
@@ -143,8 +166,8 @@ def run_agent(query: str, agent_type: str, model_key: str) -> dict:
         "provider": cfg["provider"],
         "agent": agent_type,
         "latency_ms": round(latency, 1),
-        "prompt_tokens": usage.prompt_tokens if usage else 0,
-        "completion_tokens": usage.completion_tokens if usage else 0,
+        "prompt_tokens": prompt_tokens,
+        "completion_tokens": completion_tokens,
         "total_tokens": total_tokens,
         "estimated_cost": cost,
         "fallback_used": fallback_used,

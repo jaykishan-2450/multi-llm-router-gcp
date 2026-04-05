@@ -1,104 +1,111 @@
 """
 Configuration — Single source of truth.
-Models: Only models that WORK reliably without rate limits.
-  - Groq: LLaMA 8B, LLaMA 70B, GPT-OSS-20B, GPT-OSS-120B
-  - Gemini: gemini-2.5-flash-lite, gemini-2.5-flash
+Models: Vertex AI Gemini models only.
+    - Gemini 2.5 family: Primary defaults (_a)
+    - Gemini 3.0 family: Backup fallbacks (_b)
+Authentication: Google Cloud Application Default Credentials (gcloud CLI)
 """
 
 import os
+import vertexai
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+# ── Vertex AI Configuration ──
+VERTEX_PROJECT_ID = os.getenv("VERTEX_PROJECT_ID", "cs-pcsgcppg103-prj-playgnd-llm")
+VERTEX_LOCATION = os.getenv("VERTEX_LOCATION", "us-central1")
 
 try:
     import streamlit as st
     if hasattr(st, "secrets"):
-        GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", GROQ_API_KEY)
-        GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY", GEMINI_API_KEY)
+        VERTEX_PROJECT_ID = st.secrets.get("VERTEX_PROJECT_ID", VERTEX_PROJECT_ID)
+        VERTEX_LOCATION = st.secrets.get("VERTEX_LOCATION", VERTEX_LOCATION)
 except Exception:
     pass
 
+# Initialize Vertex AI with Application Default Credentials
+vertexai.init(project=VERTEX_PROJECT_ID, location=VERTEX_LOCATION)
+
 # ══════════════════════════════════════════════════════
-# MODEL REGISTRY
+# MODEL REGISTRY — Vertex AI Only
 # ══════════════════════════════════════════════════════
 ALL_MODELS = {
     # ── LITE TIER ──
     "lite_a": {
-        "model": "gemini/gemini-2.5-flash-lite",
-        "api_key": GEMINI_API_KEY,
-        "label": "Gemini 2.5 Flash-Lite",
+        "model": "gemini-2.5-flash-lite",
+        "label": "Vertex Gemini 2.5 Flash-Lite",
         "tier": "lite",
-        "provider": "Google",
-        "params": "Optimized",
-        "cost_per_1k_tokens": 0.00005,
-        "avg_latency_ms": 400,
-        "strength": "Fastest & cheapest",
+        "provider": "Vertex AI",
+        "params": "Fast & Optimized",
+        "cost_per_1k_tokens": 0.0001,
+        "avg_latency_ms": 300,
+        "strength": "Latest Vertex AI lite path — faster inference",
     },
     "lite_b": {
-        "model": "groq/openai/gpt-oss-20b",
-        "api_key": GROQ_API_KEY,
-        "label": "GPT-OSS 20B",
+        "model": "gemini-2.5-flash-lite",
+        "label": "Vertex Gemini 2.5 Flash-Lite",
         "tier": "lite",
-        "provider": "Groq",
-        "params": "20B",
-        "cost_per_1k_tokens": 0.000075,
-        "avg_latency_ms": 500,
-        "strength": "Fast 20B model, 1000 T/sec speed",
+        "provider": "Vertex AI",
+        "params": "Stable",
+        "cost_per_1k_tokens": 0.0001,
+        "avg_latency_ms": 350,
+        "strength": "Fallback lite — proven stable model",
     },
 
     # ── STANDARD TIER ──
     "standard_a": {
-        "model": "groq/llama-3.1-8b-instant",
-        "api_key": GROQ_API_KEY,
-        "label": "LLaMA 3.1 8B",
+        "model": "gemini-2.5-flash",
+        "label": "Vertex Gemini 2.5 Flash",
         "tier": "standard",
-        "provider": "Groq",
-        "params": "8B",
-        "cost_per_1k_tokens": 0.0001,
-        "avg_latency_ms": 500,
-        "strength": "Balanced cost & quality",
+        "provider": "Vertex AI",
+        "params": "Balanced & Fast",
+        "cost_per_1k_tokens": 0.0003,
+        "avg_latency_ms": 400,
+        "strength": "Latest Vertex AI standard — balanced performance",
     },
     "standard_b": {
-        "model": "groq/openai/gpt-oss-120b",
-        "api_key": GROQ_API_KEY,
-        "label": "GPT-OSS 120B",
+        "model": "gemini-2.5-flash",
+        "label": "Vertex Gemini 2.5 Flash",
         "tier": "standard",
-        "provider": "Groq",
-        "params": "120B",
-        "cost_per_1k_tokens": 0.00015,
-        "avg_latency_ms": 800,
-        "strength": "120B params, strong reasoning at low cost",
+        "provider": "Vertex AI",
+        "params": "Stable & Extended",
+        "cost_per_1k_tokens": 0.0003,
+        "avg_latency_ms": 450,
+        "strength": "Fallback standard — extended context window",
     },
 
     # ── PRO TIER ──
     "pro_a": {
-        "model": "groq/llama-3.3-70b-versatile",
-        "api_key": GROQ_API_KEY,
-        "label": "LLaMA 3.3 70B",
+        "model": "gemini-2.5-pro",
+        "label": "Vertex Gemini 2.5 Pro",
         "tier": "pro",
-        "provider": "Groq",
-        "params": "70B",
-        "cost_per_1k_tokens": 0.0008,
-        "avg_latency_ms": 2500,
-        "strength": "Smartest open-source model",
+        "provider": "Vertex AI",
+        "params": "Most Powerful",
+        "cost_per_1k_tokens": 0.00125,
+        "avg_latency_ms": 2000,
+        "strength": "Latest Vertex AI pro — cutting-edge reasoning",
     },
     "pro_b": {
-        "model": "gemini/gemini-2.5-flash",
-        "api_key": GEMINI_API_KEY,
-        "label": "Gemini 2.5 Flash",
+        "model": "gemini-2.5-pro",
+        "label": "Vertex Gemini 2.5 Pro",
         "tier": "pro",
-        "provider": "Google",
-        "params": "~65B equivalent",
-        "cost_per_1k_tokens": 0.0005,
-        "avg_latency_ms": 2000,
-        "strength": "Google's best, strong analysis",
+        "provider": "Vertex AI",
+        "params": "Stable & Powerful",
+        "cost_per_1k_tokens": 0.00125,
+        "avg_latency_ms": 2200,
+        "strength": "Fallback pro — proven high-quality reasoning",
     },
 }
 
 # ── Router ──
 ROUTER_MODEL = {
-    "model": "groq/llama-3.1-8b-instant",
-    "api_key": GROQ_API_KEY,
+    "model": "gemini-2.5-flash-lite",
+    "label": "Vertex Gemini 2.5 Flash-Lite (Router)",
+}
+
+# ── Output token caps by tier ──
+TIER_MAX_OUTPUT_TOKENS = {
+    "lite": 2048,
+    "standard": 4096,
+    "pro": 8192,
 }
 
 # ── Defaults ──

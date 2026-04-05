@@ -12,13 +12,16 @@ from guardrails import check_input, check_output, track_cost, get_status
 from analytics import log_query, load_logs, compute_savings, session_stats, clear_logs
 from config import ALL_MODELS, UPGRADE_OPTIONS, TIER_DEFAULTS
 
+import os
+# os.environ["REQUESTS_CA_BUNDLE"] = "zscaler_root.pem"
+
 st.set_page_config(page_title="Deep Agent v2.0", layout="wide", page_icon="🤖")
 
 # ── Styling ──
 st.markdown("""
 <style>
     [data-testid="stMetric"] {
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        background: linear-gradient(135deg, #e6f7ff 0%, #cceeff 100%);
         border: 1px solid #334155;
         border-radius: 12px;
         padding: 16px 12px;
@@ -67,11 +70,11 @@ with st.sidebar:
     st.markdown("""
 | Tier | Model A | Model B |
 |------|---------|---------|
-| 🟢 Lite | Gemini Flash-Lite | GPT-OSS 20B |
-| 🟠 Std | LLaMA 8B | GPT-OSS 120B |
-| 🔴 Pro | LLaMA 70B | Gemini 2.5 |
+| 🟢 Lite | Vertex Gemini 2.5 Flash-Lite |  Vertex Gemini 2.5 Flash-Lite(lite_b) |
+| 🟠 Std | Vertex Gemini 2.5 Flash | Vertex 2.5 Gemini Flash (standard_b)|
+| 🔴 Pro | Vertex Gemini 2.5 Pro | Vertex 2.5 Gemini Pro (pro_b)) |
 """)
-    st.caption("🔀 Router: LLaMA 8B (Groq)")
+    st.caption("🔀 Router: Vertex AI Gemini Flash-lite")
 
     # Examples
     st.divider()
@@ -87,7 +90,7 @@ with st.sidebar:
         "🛡️ PII Test": "My email is john@company.com, help me with Python",
     }
     for label, ex in examples.items():
-        if st.button(label, key=f"ex_{label}", use_container_width=True):
+        if st.button(label, key=f"ex_{label}", width='stretch'):
             st.session_state["query_input"] = ex
 
 # ════════════════════════════════════════
@@ -110,9 +113,9 @@ query = st.text_area(
 
 col_run, col_clear = st.columns([5, 1])
 with col_run:
-    run_clicked = st.button("🚀 Run Deep Agent", type="primary", use_container_width=True)
+    run_clicked = st.button("🚀 Run Deep Agent", type="primary", width='stretch')
 with col_clear:
-    if st.button("🗑️", use_container_width=True, help="Clear results"):
+    if st.button("🗑️", width='stretch', help="Clear results"):
         for k in ["last_result", "last_routing", "last_query", "upgrade_result", "query_input"]:
             st.session_state.pop(k, None)
         st.rerun()
@@ -261,7 +264,7 @@ if "last_result" in st.session_state:
             for i, key in enumerate(same):
                 m = ALL_MODELS[key]
                 with cols[i]:
-                    if st.button(f"🔄 {m['label']}\n({m['provider']})", key=f"sw_{key}", use_container_width=True):
+                    if st.button(f"🔄 {m['label']}\n({m['provider']})", key=f"sw_{key}", width='stretch'):
                         with st.spinner(f"Running {m['label']}..."):
                             up = run_agent(query, routing["agent"], key)
                             log_query(routing, up, upgraded_from=current_key)
@@ -278,7 +281,7 @@ if "last_result" in st.session_state:
                     if st.button(
                         f"{tier_icon} {m['label']}\n({m['provider']} · ~{m['avg_latency_ms']}ms)",
                         key=f"up_{key}",
-                        use_container_width=True,
+                        width='stretch',
                     ):
                         with st.spinner(f"Upgrading to {m['label']}..."):
                             up = run_agent(query, routing["agent"], key)
@@ -371,7 +374,7 @@ if "last_result" in st.session_state:
             "Avg Latency": f"{info['latency']} ms",
             "": "✅ Selected" if info["is_current"] else "",
         })
-    st.dataframe(pd.DataFrame(cost_rows), use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(cost_rows), width='stretch', hide_index=True)
 
     # ════════════════════════════════════
     # EXECUTION TRACE
@@ -447,7 +450,7 @@ if logs_df is not None and len(logs_df) > 0:
                         color_discrete_map={"lite": "#51CF66", "standard": "#FFA94D", "pro": "#FF6B6B"},
                     )
                     fig.update_layout(height=350, margin=dict(t=40, b=20, l=20, r=20))
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width='stretch')
             with t2:
                 if stats["agents"]:
                     fig = px.pie(
@@ -458,7 +461,7 @@ if logs_df is not None and len(logs_df) > 0:
                         color_discrete_map={"coding": "#339AF0", "math": "#845EF7", "reasoning": "#20C997"},
                     )
                     fig.update_layout(height=350, margin=dict(t=40, b=20, l=20, r=20))
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width='stretch')
 
         with tab2:
             if len(logs_df) > 1:
@@ -469,7 +472,7 @@ if logs_df is not None and len(logs_df) > 0:
                     labels={"index": "Query #", "cost": "Cost ($)"},
                 )
                 fig.update_layout(height=350, margin=dict(t=40, b=20, l=20, r=20))
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width='stretch')
 
             s1, s2, s3 = st.columns(3)
             with s1:
@@ -488,12 +491,12 @@ if logs_df is not None and len(logs_df) > 0:
                     labels={"index": "Query #", "latency_ms": "Latency (ms)"},
                 )
                 fig.update_layout(height=350, margin=dict(t=40, b=20, l=20, r=20))
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width='stretch')
 
         with tab4:
             show_cols = [c for c in ["timestamp", "agent", "complexity", "tier",
                                       "model_label", "latency_ms", "tokens", "cost"] if c in logs_df.columns]
-            st.dataframe(logs_df[show_cols].sort_index(ascending=False), use_container_width=True, hide_index=True)
+            st.dataframe(logs_df[show_cols].sort_index(ascending=False), width='stretch', hide_index=True)
             if st.button("🗑️ Clear All Logs"):
                 clear_logs()
                 st.rerun()

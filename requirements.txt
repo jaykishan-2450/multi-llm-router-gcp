@@ -1,4 +1,6 @@
 streamlit>=1.30.0
-litellm>=1.30.0
 pandas
 plotly
+google-auth
+google-cloud-aiplatform>=1.60.0
+
