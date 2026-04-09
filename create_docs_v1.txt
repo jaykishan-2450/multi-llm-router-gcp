@@ -1,8 +1,8 @@
 # create_documentation_pdf.py
 """
 Run this script to generate the complete project documentation PDF:
-    pip install reportlab pillow
-    python create_docs.py
+    pip install reportlab pillow requests
+    python create_documentation_pdf.py
 """
 
 from reportlab.lib.pagesizes import A4
@@ -12,7 +12,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT, TA_JUSTIFY
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    HRFlowable, PageBreak, KeepTogether, Image
+    HRFlowable, PageBreak, CondPageBreak, KeepTogether, Image
 )
 from reportlab.platypus.flowables import Flowable
 from reportlab.lib.colors import HexColor
@@ -54,7 +54,7 @@ PAGE_W, PAGE_H = A4
 MARGIN = 1.8 * cm
 CONTENT_W = PAGE_W - 2 * MARGIN
 
-OUTPUT_FILE = "Deep_Agent_v2_Project_Documentation.pdf"
+OUTPUT_FILE = "Deep_Agent_v1_Project_Documentation.pdf"
 
 # ══════════════════════════════════════════════════
 # SCREENSHOT FILES
@@ -205,7 +205,7 @@ class CoverPage(Flowable):
                     5, fill=1, stroke=0)
         c.setFillColor(C_WHITE)
         c.setFont("Helvetica-Bold", 10)
-        c.drawCentredString(w / 2, h - 3.68 * cm, "v 2 . 0")
+        c.drawCentredString(w / 2, h - 3.68 * cm, "v 1 . 0")
 
         # Subtitle
         c.setFillColor(C_LIGHT)
@@ -214,7 +214,7 @@ class CoverPage(Flowable):
                             "Dynamic Multi-Agent Router")
         c.setFont("Helvetica-Oblique", 11)
         c.drawCentredString(w / 2, h - 5.4 * cm,
-                            "Vertex AI Native Orchestration  ·  Cost Optimization  ·  Production Safety")
+                            "Intelligent LLM Orchestration  ·  Cost Optimization  ·  Production Safety")
 
         # Divider line
         c.setStrokeColor(C_ACCENT)
@@ -228,7 +228,7 @@ class CoverPage(Flowable):
             ("Intern 2",       "Jay Kishan (585739)"),
             ("Mentor",         "Amritesh Kumar Sinha"),
             ("Reviewers",      "Chetana Amancharla  |  Amritesh Kumar Sinha"),
-            ("Submission",     "April 9, 2026"),
+            ("Submission",     "April 9, 2025"),
         ]
         ry = h - 7.2 * cm
         for label, val in rows:
@@ -240,7 +240,18 @@ class CoverPage(Flowable):
             c.drawString(4.5 * cm, ry, val)
             ry -= 0.6 * cm
 
-       
+        # Live link
+        c.setFillColor(C_ACCENT2)
+        c.roundRect(1.0*cm, h - 13.0*cm, w - 2.0*cm, 0.65*cm,
+                    5, fill=1, stroke=0)
+        c.setFillColor(C_WHITE)
+        c.setFont("Helvetica-Bold", 9)
+        c.drawString(1.3*cm, h - 12.75*cm,
+                     "Live App:")
+        c.setFillColor(C_ACCENT)
+        c.setFont("Helvetica", 9)
+        c.drawString(3.2*cm, h - 12.75*cm,
+                     "https://shivam-multi-agent-router.streamlit.app")
 
         # GitHub link
         c.setFillColor(C_CARD)
@@ -252,10 +263,73 @@ class CoverPage(Flowable):
         c.setFillColor(C_ACCENT)
         c.setFont("Helvetica", 9)
         c.drawString(3.2*cm, h - 13.65*cm,
-                     "https://github.com/jaykishan-2450/multi-llm-router-gcp")
+                     "https://github.com/shivamabes/multi-agent-router")
+
+        # Research work documents / vibe page
+        section_x = 1.0 * cm
+        section_y = h - 17.0 * cm
+        section_w = w - 2.0 * cm
+        section_h = 2.5 * cm
+
+        c.setFillColor(C_CARD)
+        c.roundRect(section_x, section_y, section_w, section_h,
+                    5, fill=1, stroke=0)
+        c.setFillColor(C_ACCENT2)
+        c.roundRect(section_x, section_y, 0.18 * cm, section_h,
+                    4, fill=1, stroke=0)
+
+        c.setFillColor(C_WHITE)
+        c.setFont("Helvetica-Bold", 8.5)
+        c.drawString(section_x + 0.35 * cm, section_y + section_h - 0.42 * cm,
+                     "Research Work Documents / Vibe Page")
+
+        table_x = section_x + 0.35 * cm
+        table_w = section_w - 0.7 * cm
+        row_h = 0.52 * cm
+        header_y = section_y + section_h - 1.05 * cm
+        table_y = header_y - 2 * row_h
+        topic_col_w = table_w * 0.72
+        link_col_x = table_x + topic_col_w
+
+        c.setFillColor(C_TABLE_HDR)
+        c.roundRect(table_x, table_y + 2 * row_h, table_w, row_h,
+                    2, fill=1, stroke=0)
+
+        c.setStrokeColor(C_BORDER)
+        c.setLineWidth(0.4)
+        c.line(link_col_x, table_y, link_col_x, table_y + 3 * row_h)
+        c.rect(table_x, table_y, table_w, 3 * row_h, fill=0, stroke=1)
+
+        c.setFillColor(C_WHITE)
+        c.setFont("Helvetica-Bold", 8)
+        c.drawString(table_x + 0.15 * cm,
+                     table_y + 2 * row_h + 0.17 * cm, "Topic")
+        c.drawString(link_col_x + 0.15 * cm,
+                     table_y + 2 * row_h + 0.17 * cm, "Link")
+
+        rows = [
+            ("1) LiteLLM vs OpenRouter", "link1"),
+            ("2) Google Colab MCP server", "link2"),
+        ]
+        for i, (topic, placeholder_link) in enumerate(rows):
+            y = table_y + (1 - i) * row_h
+            c.setFillColor(C_TABLE_ALT if i % 2 == 0 else C_TABLE_EVEN)
+            c.rect(table_x, y, table_w, row_h, fill=1, stroke=0)
+
+            # Keep separator under header and between rows for clear spacing.
+            c.setStrokeColor(C_BORDER)
+            c.line(table_x, y, table_x + table_w, y)
+
+            c.setFillColor(C_LIGHT)
+            c.setFont("Helvetica", 7.8)
+            c.drawString(table_x + 0.15 * cm, y + 0.17 * cm, topic)
+
+            c.setFillColor(C_ACCENT)
+            c.setFont("Helvetica-Oblique", 7.8)
+            c.drawString(link_col_x + 0.15 * cm, y + 0.17 * cm, placeholder_link)
 
         # Tech pills at bottom
-        pills = ["Vertex AI", "Gemini 2.5", "Streamlit", "Guardrails", "Python 3.9+"]
+        pills = ["LiteLLM", "Groq", "Google Gemini", "Streamlit", "Python 3.9+"]
         pill_colors = [C_ACCENT2, C_GREEN, C_ACCENT, C_RED, C_ORANGE]
         px = 1.0 * cm
         py = 1.1 * cm
@@ -281,16 +355,16 @@ def build_styles():
 
     body = ps("Body",
               fontName="Helvetica", fontSize=9.5,
-              leading=15, textColor=C_LIGHT,
+                            leading=15, textColor=C_LIGHT,
               spaceAfter=4, alignment=TA_JUSTIFY)
 
     body_b = ps("BodyBold",
                 fontName="Helvetica-Bold", fontSize=9.5,
-                leading=15, textColor=C_WHITE, spaceAfter=4)
+                                leading=15, textColor=C_WHITE, spaceAfter=4)
 
     bullet = ps("Bullet",
                 fontName="Helvetica", fontSize=9,
-                leading=14, textColor=C_LIGHT,
+                                leading=14, textColor=C_LIGHT,
                 leftIndent=14, spaceAfter=2,
                 bulletIndent=4)
 
@@ -393,7 +467,7 @@ class PageTemplate:
         c.setFillColor(C_MID)
         c.setFont("Helvetica", 8)
         c.drawRightString(PAGE_W - MARGIN, PAGE_H - 0.72 * cm,
-                          "GCP Technology For Topaz Fabric  |  April 2026")
+                          "GCP Technology For Topaz Fabric  |  April 2025")
 
         # Footer bar
         c.setFillColor(C_NAVY)
@@ -464,6 +538,10 @@ def build_pdf():
     def link_line(text):
         story.append(Paragraph(text, S["link"]))
 
+    def section_break(min_space=5.5):
+        # Avoid half-empty pages by only forcing a new page when needed.
+        story.append(CondPageBreak(min_space * cm))
+
     def section(num, title, color=None):
         sp(0.4)
         story.append(SectionHeader(num, title, color=color))
@@ -472,7 +550,7 @@ def build_pdf():
     def subsection(title, color=None):
         sp(0.2)
         story.append(SubHeader(title, color=color))
-        sp(0.2)
+        sp(0.12)
 
     def card(lines, color=None):
         story.append(InfoCard(lines, color=color))
@@ -541,13 +619,13 @@ def build_pdf():
     section("01", "Basic Information", color=C_ACCENT)
 
     info_rows = [
-        ["Project Title",  "Deep Agent v2.0 — Dynamic Multi-Agent Router (Vertex AI Native)"],
+        ["Project Title",  "Deep Agent v2.0 — Dynamic Multi-Agent Router"],
         ["Team Name",      "GCP Technology For Topaz Fabric"],
         ["Intern 1",       "Shivam"],
         ["Intern 2",       "Jay Kishan"],
         ["Mentor",         "Amritesh Kumar Sinha"],
         ["Reviewers",      "Chetana Amancharla  |  Amritesh Kumar Sinha"],
-        ["Submission Date","April 9, 2026"],
+        ["Submission Date","April 9, 2025"],
         ["Program",        "Internal / Companywide Internship"],
     ]
     story.append(make_table(
@@ -558,6 +636,12 @@ def build_pdf():
     ))
     sp(0.3)
 
+    subsection("Project Links", color=C_ACCENT)
+    card([
+        "Live Application:  https://shivam-multi-agent-router.streamlit.app",
+        "GitHub Repository: https://github.com/shivamabes/multi-agent-router",
+    ], color=C_ACCENT)
+
     # ──────────────────────────────────────────────
     # SECTION 02 — PROJECT OVERVIEW
     # ──────────────────────────────────────────────
@@ -565,24 +649,24 @@ def build_pdf():
 
     subsection("Problem Statement", color=C_RED)
     body(
-        "Version 1.0 relied on mixed provider routing and non-native model calls, "
-        "which introduced provider-specific behavior differences, rate-limit variability, "
-        "and avoidable integration complexity. The v2.0 goal was to retain the proven "
-        "multi-agent architecture while migrating routing and agent execution to a "
-        "single GCP-native runtime using Vertex AI."
+        "Traditional LLM deployments route every query — regardless of complexity — "
+        "to the most expensive Pro model. This results in unnecessary cost overruns, "
+        "slower responses for simple queries, and no specialization per task type. "
+        "There is also no fallback mechanism when primary models fail, and zero "
+        "visibility into cost or performance metrics."
     )
     sp(0.1)
 
     subsection("Objectives", color=C_GREEN)
     objectives = [
-        "Migrate router inference to Vertex AI Gemini 2.5 Flash-Lite",
-        "Migrate all agent LLM execution to Vertex AI GenerativeModel API",
-        "Preserve tier-based dynamic routing (Lite / Standard / Pro)",
-        "Retain 3 specialized agents: Coding, Math, Reasoning",
-        "Retain production guardrails (input, output, daily cost budget)",
-        "Retain fallback resilience with ordered model-key fallback chain",
-        "Add local setup requirements for Google Cloud SDK authentication",
-        "Document optional GCP extensions (BigQuery, monitoring, Cloud Run)",
+        "Build an intelligent routing layer that classifies queries automatically",
+        "Select the optimal LLM model tier (Lite / Standard / Pro) at runtime",
+        "Implement 3 specialized agents: Coding, Math, Reasoning",
+        "Reduce LLM inference costs by up to 94% vs all-Pro routing",
+        "Build 3-layer production-grade guardrails (injection, output, cost)",
+        "Provide 3-level automatic fallback ensuring 99.8% uptime",
+        "Deploy a live Streamlit application with full analytics dashboard",
+        "Document GCP production migration path (10 services mapped)",
     ]
     for obj in objectives:
         bul(obj)
@@ -592,10 +676,9 @@ def build_pdf():
     body(
         "Deep Agent v2.0 is a multi-agent AI orchestration system deployed on "
         "Streamlit Cloud. Every query passes through: Input Guardrails → Router "
-        "(Vertex Gemini 2.5 Flash-Lite classifies agent + complexity) → Specialized "
-        "Agent on Vertex AI with runtime tier selection → Output Guardrails → "
-        "Analytics logging. Users can manually upgrade to any of 6 configured model "
-        "profiles across 3 tiers via the UI."
+        "(LLaMA 8B classifies agent + complexity) → Specialized Agent with optimal "
+        "model → Output Guardrails → Analytics logging. Users can manually upgrade "
+        "to any of 6 models across 3 tiers via the UI."
     )
 
     # ──────────────────────────────────────────────
@@ -607,9 +690,9 @@ def build_pdf():
     pipeline_steps = [
         ["Stage", "Component", "Description"],
         ["1", "Input Guardrails",  "check_input() — blocks injection, warns PII, rate-limits"],
-        ["2", "Router",            "route_query() — Vertex Gemini 2.5 Flash-Lite classification"],
+        ["2", "Router",            "route_query() — LLaMA 8B classifies agent + complexity"],
         ["3", "Model Selection",   "Complexity→Tier: simple→Lite, medium→Std, complex→Pro"],
-        ["4", "Agent Execution",   "run_agent() — specialized prompt + Vertex call + fallback"],
+        ["4", "Agent Execution",   "run_agent() — specialized prompt + LLM call + fallback"],
         ["5", "Output Guardrails", "check_output() — scans for dangerous code, uncertainty"],
         ["6", "Analytics",         "log_query() → CSV · compute_savings() → cost table"],
     ]
@@ -620,14 +703,14 @@ def build_pdf():
     ))
     sp(0.2)
 
-    subsection("Model Registry — 6 Profiles · 3 Tiers · Vertex AI", color=C_ACCENT)
+    subsection("Model Registry — 6 Models · 3 Tiers · 2 Providers", color=C_ACCENT)
     model_rows = [
-        ["lite_a",     "gemini-2.5-flash-lite", "Vertex AI", "🟢 Lite",     "$0.0001",   "300 ms",  "Default Lite"],
-        ["lite_b",     "gemini-2.5-flash-lite", "Vertex AI", "🟢 Lite",     "$0.0001",   "350 ms",  "Lite Fallback"],
-        ["standard_a", "gemini-2.5-flash",      "Vertex AI", "🟠 Standard", "$0.0003",   "400 ms",  "Default Std"],
-        ["standard_b", "gemini-2.5-flash",      "Vertex AI", "🟠 Standard", "$0.0003",   "450 ms",  "Std Fallback"],
-        ["pro_a",      "gemini-2.5-pro",        "Vertex AI", "🔴 Pro",      "$0.00125",  "2000 ms", "Default Pro"],
-        ["pro_b",      "gemini-2.5-pro",        "Vertex AI", "🔴 Pro",      "$0.00125",  "2200 ms", "Pro Fallback"],
+        ["lite_a",     "gemini-2.5-flash-lite",   "Google", "🟢 Lite",     "$0.00005",  "400 ms",  "Default Lite"],
+        ["lite_b",     "gpt-oss-20b",             "Groq",   "🟢 Lite",     "$0.000075", "500 ms",  "Lite Fallback"],
+        ["standard_a", "llama-3.1-8b-instant",    "Groq",   "🟠 Standard", "$0.0001",   "500 ms",  "Default Std"],
+        ["standard_b", "gpt-oss-120b",            "Groq",   "🟠 Standard", "$0.00015",  "800 ms",  "Std Alternate"],
+        ["pro_a",      "llama-3.3-70b-versatile", "Groq",   "🔴 Pro",      "$0.0008",   "2500 ms", "Default Pro"],
+        ["pro_b",      "gemini-2.5-flash",        "Google", "🔴 Pro",      "$0.0005",   "2000 ms", "Pro Alternate"],
     ]
     story.append(make_table(
         ["Key", "Model", "Provider", "Tier", "Cost/1k", "Latency", "Role"],
@@ -639,8 +722,8 @@ def build_pdf():
     sp(0.15)
     card([
         "Upgrade Chain: lite_a → lite_b → standard_a → standard_b → pro_a → pro_b",
-        "Fallback Chain: requested model → same-tier alternate → standard_a → lite_a → remaining",
-        "Router Model: Vertex Gemini 2.5 Flash-Lite — Temperature=0 · low-token classifier",
+        "Fallback Chain: Primary model → same-tier alternate → lite_b (hard last resort)",
+        "Router Model:  LLaMA 3.1 8B (Groq) — Temperature=0 · ~100ms · <1% cost overhead",
     ], color=C_ACCENT2)
 
     # ──────────────────────────────────────────────
@@ -650,13 +733,16 @@ def build_pdf():
     sp(0.1)
 
     img(SCREENSHOT_MAIN,
-        "Figure 1: Deep Agent v2.0 — Main Interface",
+        "Figure 1: Deep Agent v2.0 — Main Interface "
+        "(https://shivam-multi-agent-router.streamlit.app)",
         max_w=CONTENT_W, max_h=9.5*cm)
     sp(0.2)
     img(SCREENSHOT_ANALYTICS,
         "Figure 2: Analytics Dashboard — Queries=6, Cost=$0.0030, "
         "Avg Latency=3886ms, Cost Saved=48%, Fallbacks=0",
         max_w=CONTENT_W, max_h=9.5*cm)
+
+    section_break()
 
     # ──────────────────────────────────────────────
     # SECTION 04 — IMPLEMENTATION
@@ -666,20 +752,14 @@ def build_pdf():
     subsection("Phase 1 — Environment Setup", color=C_ACCENT)
     impl_steps = [
         ("Step 1: Repository", [
-            "Created GitHub repository",
+            "Created GitHub repository: github.com/shivamabes/multi-agent-router",
             "Initialized Python .gitignore + requirements.txt",
-            "Created venv and installed core deps from requirements.txt",
+            "Commands: python -m venv venv | pip install streamlit litellm pandas plotly",
         ]),
-        ("Step 2: Local GCP Authentication (Required)", [
-            "Installed Google Cloud SDK and selected a GCP project",
-            "Ran gcloud auth login and gcloud auth application-default login",
-            "Configured VERTEX_PROJECT_ID and VERTEX_LOCATION via env vars or Streamlit secrets",
-            "Avoided hardcoded credentials and never committed secrets to source control",
-        ]),
-        ("Step 3: Vertex AI Migration", [
-            "Replaced LiteLLM routing calls with Vertex GenerativeModel classification",
-            "Replaced all agent model calls with Vertex GenerativeModel + GenerationConfig",
-            "Retained fallback, guardrails, analytics logging, and upgrade UX",
+        ("Step 2: API Key Setup", [
+            "Obtained Groq API key from console.groq.com",
+            "Obtained Gemini API key from Google AI Studio (aistudio.google.com)",
+            "Set Streamlit Secrets for deployment: GROQ_API_KEY + GEMINI_API_KEY",
         ]),
     ]
     for title, points in impl_steps:
@@ -691,14 +771,12 @@ def build_pdf():
     subsection("Phase 2 — Core Files Built", color=C_ACCENT)
     files_built = [
         ["File",             "What Was Built"],
-        ["config.py",        "Vertex AI init, 6-profile registry, costs, upgrade paths, guardrail config"],
-        ["router.py",        "JSON-structured prompt, Vertex router call, parsing fallback defaults"],
-        ["agents.py",        "3 specialized prompts, Vertex model execution, ordered fallback chain"],
+        ["config.py",        "6-model registry, costs, upgrade paths, guardrail config"],
+        ["router.py",        "JSON-structured prompt, LLaMA 8B classification, fallback parsing"],
+        ["agents.py",        "3 specialized prompts, LiteLLM calls, 3-level fallback chain"],
         ["guardrails.py",    "Layer 1 input, Layer 2 output, Layer 3 system cost tracking"],
-        ["analytics.py",     "14-column CSV logging, compute_savings(), session_stats()"],
+        ["analytics.py",     "18-column CSV logging, compute_savings(), session_stats()"],
         ["app.py",           "Full Streamlit UI, upgrade system, analytics dashboard, 4 tabs"],
-        ["additional/setup_bigquery.py", "Optional BigQuery dataset/table bootstrap script"],
-        ["additional/test_logits.py",    "Experimental logprobs-based confidence validation"],
     ]
     story.append(make_table(
         files_built[0], files_built[1:],
@@ -711,9 +789,8 @@ def build_pdf():
     deploy_steps = [
         "Pushed all code to GitHub repository",
         "Connected repository to share.streamlit.io",
-        "Set Streamlit secrets: VERTEX_PROJECT_ID and VERTEX_LOCATION",
-        "Validated ADC-based local execution using Google Cloud SDK login",
-        "Verified live app deployment",
+        "Set API secrets in Streamlit Cloud dashboard",
+        "Verified live app at https://shivam-multi-agent-router.streamlit.app",
         "Tested all 6 sidebar example queries on live deployment",
     ]
     for s in deploy_steps:
@@ -724,9 +801,9 @@ def build_pdf():
     # ──────────────────────────────────────────────
     section("05", "Testing Approach", color=C_ACCENT)
     body(
-        "Testing was performed through the live Streamlit application and local "
-        "Vertex-authenticated runs, covering routing accuracy, guardrail safety, "
-        "fallback resilience, and model upgrade flows."
+        "All testing was performed manually through the live Streamlit application "
+        "at https://shivam-multi-agent-router.streamlit.app — covering routing "
+        "accuracy, guardrail safety, fallback resilience, and upgrade flows."
     )
     sp(0.1)
 
@@ -765,8 +842,8 @@ def build_pdf():
 
     subsection("5.3 Fallback & Upgrade Tests", color=C_ORANGE)
     fallback_rows = [
-        ["ADC not configured locally",        "Controlled error response, UI remains stable", "PASS"],
-        ["Primary model call failure",        "Next fallback model key attempted",            "PASS"],
+        ["Invalid Gemini API key set",        "Falls back to GPT-OSS 20B",          "PASS"],
+        ["Rate limit on primary model",       "Same-tier alternate used",            "PASS"],
         ["Click same-tier switch button",     "New model answers same query",        "PASS"],
         ["Click tier upgrade button",         "Pro model gives deeper answer",       "PASS"],
         ["Cost delta after upgrade",          "Delta cost + latency shown in UI",    "PASS"],
@@ -784,9 +861,9 @@ def build_pdf():
         ["Queries Logged",   "6",       "CSV row count matches queries run"],
         ["Total Cost",       "$0.0030", "Sum of per-query estimated costs"],
         ["Avg Latency",      "3886 ms", "Higher due to Pro-tier queries"],
-        ["Cost Saved",       "48%",     "vs all-pro_a routing baseline"],
+        ["Cost Saved",       "48%",     "vs all-Pro-A routing baseline"],
         ["Fallbacks",        "0",       "All primary models succeeded"],
-        ["Distribution",     "Mixed",   "33% Lite + 17% Std + 50% Pro"],
+        ["Distribution",     "50% Pro", "33% Lite + 17% Std + 50% Pro"],
     ]
     story.append(make_table(
         ["Metric", "Observed Value", "Notes"],
@@ -794,6 +871,8 @@ def build_pdf():
         col_widths=[4.5*cm, 3.0*cm, 9.2*cm],
         hdr_color=C_ACCENT2,
     ))
+
+    section_break()
 
     # ──────────────────────────────────────────────
     # SECTION 06 — TOOLS & SETUP
@@ -821,11 +900,10 @@ def build_pdf():
     subsection("Libraries & Frameworks", color=C_ACCENT)
     lib_rows = [
         ["streamlit",  "1.30+",   "Web UI framework + dashboard"],
-        ["google-cloud-aiplatform", ">=1.60.0", "Vertex AI SDK for model inference"],
-        ["google-auth", "latest", "Application Default Credentials for local/dev auth"],
+        ["litellm",    "1.30+",   "Unified LLM API (Groq + Gemini)"],
         ["pandas",     "latest",  "Data processing for analytics CSV"],
         ["plotly",     "latest",  "Interactive charts in dashboard"],
-        ["csv",        "stdlib",  "Query logging — 14 columns per row"],
+        ["csv",        "stdlib",  "Query logging — 18 columns per row"],
         ["re",         "stdlib",  "PII regex detection in guardrails"],
         ["json",       "stdlib",  "Router JSON output parsing"],
         ["datetime",   "stdlib",  "Daily cost reset tracking"],
@@ -843,10 +921,7 @@ def build_pdf():
         "python -m venv venv                      # Create virtual environment",
         ".\\venv\\Scripts\\Activate.ps1            # Activate (Windows PowerShell)",
         "source venv/bin/activate                 # Activate (Mac/Linux)",
-        "pip install -r requirements.txt",
-        "gcloud auth login",
-        "gcloud auth application-default login",
-        "gcloud config set project <YOUR_GCP_PROJECT_ID>",
+        "pip install streamlit litellm pandas plotly",
         "pip freeze > requirements.txt",
         "python -m streamlit run app.py           # Run locally",
         "git add . && git commit -m 'feat: ...'   # Commit",
@@ -856,22 +931,12 @@ def build_pdf():
         code_line(cmd)
     sp(0.1)
 
-    subsection("Local Vertex AI Authentication (Required)", color=C_ORANGE)
-    card([
-        "1) Install Google Cloud SDK and sign in with gcloud auth login",
-        "2) Run gcloud auth application-default login for local ADC",
-        "3) Set VERTEX_PROJECT_ID and VERTEX_LOCATION (example: us-central1)",
-        "4) Never hardcode or commit credentials in code, configs, or docs",
-    ], color=C_ORANGE)
-    sp(0.05)
-
     subsection("API Services Used", color=C_ACCENT)
     api_rows = [
-        ["Vertex AI",       "cloud.google.com/vertex-ai", "Router + all model inference",   "Active"],
-        ["Google Cloud SDK", "cloud.google.com/sdk",      "Local ADC authentication",        "Active"],
+        ["Groq Console",    "console.groq.com",         "LLaMA 8B, 70B, GPT-OSS keys",  "Obtained"],
+        ["Google AI Studio","aistudio.google.com",      "Gemini Flash-Lite & Flash key", "Obtained"],
         ["Streamlit Cloud", "share.streamlit.io",       "App deployment & hosting",      "Obtained"],
         ["GitHub",          "github.com",               "Code repository",               "Obtained"],
-        ["BigQuery (optional)", "cloud.google.com/bigquery", "Production-grade analytics sink", "Experimental"],
     ]
     story.append(make_table(
         ["Service", "URL", "Purpose", "Status"],
@@ -880,17 +945,19 @@ def build_pdf():
         hdr_color=C_ACCENT2,
     ))
 
+    section_break()
+
     # ──────────────────────────────────────────────
     # SECTION 07 — CLOUD & ACCESS
     # ──────────────────────────────────────────────
     section("07", "Cloud & Access", color=C_GREEN)
 
-    subsection("7.1 Current Services (Implemented in v2.0)", color=C_ACCENT)
+    subsection("7.1 Current Services (Prototype)", color=C_ACCENT)
     current_cloud = [
-        ["Vertex AI",       "Google Cloud",  "Router + all LLM inference",          "✅ Active"],
-        ["Google Cloud SDK", "Google Cloud", "Local ADC authentication",             "✅ Active"],
-        ["Streamlit Cloud", "Streamlit Inc.", "App hosting & deployment",            "✅ Active"],
-        ["GitHub",          "Microsoft",     "Code repository & version control",    "✅ Active"],
+        ["Groq API",       "Groq Cloud",    "LLM inference (LLaMA models)",      "✅ Active"],
+        ["Gemini API",     "Google",        "Gemini Flash-Lite + Flash",          "✅ Active"],
+        ["Streamlit Cloud","Streamlit Inc.","App hosting & deployment",           "✅ Active"],
+        ["GitHub",         "Microsoft",     "Code repository & version control",  "✅ Active"],
     ]
     story.append(make_table(
         ["Service", "Provider", "Purpose", "Status"],
@@ -900,9 +967,9 @@ def build_pdf():
     ))
     sp(0.2)
 
-    subsection("7.2 GCP Services — Access & Readiness", color=C_ACCENT)
+    subsection("7.2 GCP Services — Production Roadmap", color=C_ACCENT)
     gcp_rows = [
-        ["Vertex AI",        "Primary router + execution runtime",    "✅ Available",     "roles/aiplatform.user"],
+        ["Vertex AI",        "Replace Groq/Gemini external APIs",    "✅ Available",     "roles/aiplatform.user"],
         ["Cloud Run",        "Containerized auto-scaling deployment", "❌ Not Granted",   "roles/run.developer"],
         ["BigQuery",         "Replace CSV query logging",            "❌ Not Granted",   "roles/bigquery.dataEditor"],
         ["Firestore",        "Session memory (Phase 2)",             "🔄 Not Requested", "roles/datastore.user"],
@@ -921,29 +988,29 @@ def build_pdf():
     sp(0.2)
 
     card([
-        "ACTIVE NOW: Vertex AI is the primary runtime for routing and all model calls.",
-        "MISSING ACCESS: Cloud Run — deployment remains on Streamlit Cloud for now.",
-        "MISSING ACCESS: BigQuery — analytics remain local CSV until IAM access is granted.",
+        "MISSING ACCESS: Cloud Run — Cannot deploy on GCP infrastructure (workaround: Streamlit Cloud)",
+        "MISSING ACCESS: BigQuery — Cannot use production analytics (workaround: local CSV logging)",
+        "AVAILABLE:      Vertex AI — Ready to replace external Groq/Gemini API calls",
     ], color=C_RED)
     sp(0.1)
 
     subsection("7.3 Access Issues Encountered", color=C_ORANGE)
     access_issues = [
-        ("Local ADC Not Initialized",
-         "Vertex calls failed on fresh machines without default credentials.",
-         "Required gcloud auth application-default login in local setup flow."),
+        ("Groq Rate Limits (Free Tier)",
+         "30 req/min limit caused 429 errors during testing.",
+         "Built 3-level fallback to handle rate limits automatically."),
+        ("Gemini API Quota",
+         "Free tier: 50 req/min, 1M tokens/day limit hit during load testing.",
+         "Gemini used only for Lite tier; Groq handles Standard and Pro."),
         ("Cloud Run Access Not Granted",
-         "Could not validate containerized GCP deployment in internship scope.",
-         "Used Streamlit Cloud as equivalent and documented Cloud Run migration."),
+         "Could not test containerized GCP deployment during internship.",
+         "Used Streamlit Cloud as equivalent. GCP roadmap fully documented."),
         ("BigQuery Access Not Granted",
          "Could not validate streaming inserts or SQL analytics queries.",
-         "CSV logging kept as default and setup_bigquery.py prepared for migration."),
-        ("Vertex Region / IAM Mismatch",
-         "Model invocation can fail when project, region, or IAM bindings differ.",
-         "Standardized VERTEX_LOCATION and documented minimum IAM role requirements."),
+         "CSV logging used as equivalent; BigQuery migration code written."),
         ("Streamlit File Persistence",
          "CSV logs and session files reset on Streamlit Cloud restart.",
-         "Accepted for prototype; roadmap keeps BigQuery and Firestore as durable targets."),
+         "Accepted for prototype; GCP roadmap uses BigQuery + Firestore."),
     ]
     for issue, problem, resolution in access_issues:
         bold(f"Issue: {issue}")
@@ -951,12 +1018,7 @@ def build_pdf():
         bul(f"Resolution: {resolution}")
         sp(0.05)
 
-    subsection("7.4 Experimental Files Requiring Permissions", color=C_ACCENT)
-    card([
-        "additional/setup_bigquery.py: requires BigQuery dataset/table create permissions.",
-        "additional/test_logits.py: requires Vertex model access for logprobs experiments.",
-        "additional/anthropic_vertex_smoke_test.py: requires Anthropic-on-Vertex access and package setup.",
-    ], color=C_ACCENT2)
+    section_break()
 
     # ──────────────────────────────────────────────
     # SECTION 08 — CHALLENGES & BLOCKERS
@@ -966,15 +1028,16 @@ def build_pdf():
     subsection("8.1 Technical Challenges", color=C_ORANGE)
 
     tech_challenges = [
-        ("Challenge 1: Vertex Usage Metadata Field Names",
-         "Token metadata fields differ between router and agent response objects, "
-         "which initially caused zero-token accounting in some traces.",
-         "Added defensive extraction helpers with fallback attribute names and "
-         "safe defaults when metadata is unavailable.",
-         "SDK-bound integrations need robust parsing around evolving response schemas."),
+        ("Challenge 1: LiteLLM Parameter Compatibility",
+         "Different LLM providers support different parameters. Passing "
+         "unsupported params (e.g., top_p to Groq models) caused runtime errors "
+         "that were hard to debug because they surfaced at inference time.",
+         "Added litellm.drop_params = True at module level. This silently "
+         "drops unsupported parameters per provider automatically.",
+         "Always use provider-agnostic SDK settings in multi-provider systems."),
 
         ("Challenge 2: Router JSON Parsing Failures",
-         "Vertex router output occasionally returned JSON wrapped in markdown code fences "
+         "LLaMA 8B occasionally returned JSON wrapped in markdown code fences "
          "(```json ... ```) instead of raw JSON, causing json.JSONDecodeError "
          "and breaking the routing pipeline.",
          "Added pre-processing to strip markdown fences before JSON parsing. "
@@ -989,23 +1052,24 @@ def build_pdf():
          "stored in st.session_state first, then rerun() called independently.",
          "Streamlit context managers have scope limitations — exit before rerunning."),
 
-        ("Challenge 4: Analytics CSV Schema Drift",
-         "Legacy CSV files can carry older column layouts which break strict "
-         "analytics assumptions during local restarts.",
+        ("Challenge 4: Analytics CSV Column Mismatch",
+         "On app restart, existing CSV had the old 14-column schema. Adding new "
+         "columns (session_id, cache_hit, history_turns) caused KeyError when "
+         "session_stats() tried to read them.",
          "Added _ensure() function that creates CSV with headers only if file "
          "does not exist. Added safe column existence checks with .get() fallbacks.",
          "CSV schema changes require migration strategy — even in prototypes."),
 
-        ("Challenge 5: ADC + Project Configuration Errors",
-         "Missing ADC login or wrong project/region settings produced runtime "
-         "errors that looked similar to model availability failures.",
-         "Added explicit setup documentation and standardized env vars "
-         "(VERTEX_PROJECT_ID, VERTEX_LOCATION) across local and cloud runs.",
-         "Authentication and project config should be validated before debugging model logic."),
+        ("Challenge 5: Gemini Model String Changes",
+         "Gemini model identifier strings changed between API versions, causing "
+         "model-not-found errors that looked like authentication failures.",
+         "Updated model string to gemini/gemini-2.5-flash-lite per LiteLLM "
+         "documentation. Added fallback to GPT-OSS 20B for resilience.",
+         "Pin model version strings and monitor provider changelog regularly."),
 
         ("Challenge 6: Cost Calculation Display Precision",
          "Floating point representation caused cost display to show $0.00 "
-         "for very cheap Lite-tier queries (e.g., $0.000050), making cost "
+         "for very cheap Lite-tier queries (e.g., $0.000025), making cost "
          "transparency meaningless for those queries.",
          "Implemented dynamic decimal logic: cost < 0.001 shows 6 decimal "
          "places; cost < 0.01 shows 5; else shows 4 decimal places.",
@@ -1022,21 +1086,22 @@ def build_pdf():
     subsection("8.2 Non-Technical Challenges", color=C_RED)
 
     non_tech = [
-        ("IAM Provisioning Timelines",
-         "Cloud Run and BigQuery access was not granted in the execution window, "
-         "limiting full production validation during the internship period.",
-         "Documented complete migration in additional/GCP_INTEGRATION_ROADMAP.md "
-         "and kept parity via Streamlit Cloud + local CSV.",
+        ("GCP Access Constraints",
+         "Cloud Run and BigQuery access was not granted during the internship period, "
+         "limiting ability to validate the GCP production architecture hands-on.",
+         "Documented complete GCP migration in GCP_Integration_roadmap.md. "
+         "Used Streamlit Cloud + local CSV as prototype equivalents.",
          "Request all required cloud permissions on Day 1 of any project."),
 
-        ("Environment Portability",
-         "Keeping local, demo, and cloud runtime behavior aligned required clear "
-         "authentication and configuration contracts for each environment.",
-         "Standardized ADC for local runs and Streamlit secrets for deployment "
-         "without embedding secrets into source files.",
-         "Documented setup reduces onboarding friction and runtime surprises."),
+        ("API Key Management Across Environments",
+         "Managing separate API keys for local development vs Streamlit Cloud "
+         "deployment required different approaches (env vars locally, "
+         "Streamlit Secrets on cloud).",
+         "Built dual-loading in config.py: first tries os.getenv(), "
+         "then falls back to st.secrets automatically.",
+         "Design for environment portability from the start."),
 
-        ("Understanding Vertex Cost Behavior",
+        ("Understanding LLM Cost Economics",
          "Initially unclear how to quantify and compare costs across models with "
          "different token pricing, making it hard to demonstrate ROI of routing.",
          "Implemented compute_savings() benchmarking every query against "
@@ -1055,9 +1120,9 @@ def build_pdf():
     blocker_rows = [
         ["Cloud Run access not granted",    "HIGH",   "Use Streamlit Cloud",         "Resolved"],
         ["BigQuery access not granted",     "MEDIUM", "Use local CSV logging",       "Resolved"],
-        ["ADC missing in local setup",      "HIGH",   "gcloud application-default login", "Resolved"],
-        ["Vertex region/project mismatch",  "MEDIUM", "Standardize env configuration",    "Resolved"],
-        ["CSV schema drift",                "MEDIUM", "Header checks + safe fallbacks",   "Resolved"],
+        ["Groq rate limits (free tier)",    "HIGH",   "3-level fallback built",      "Resolved"],
+        ["Gemini model string changes",     "MEDIUM", "Updated + fallback added",    "Resolved"],
+        ["LiteLLM param incompatibility",   "HIGH",   "drop_params=True",            "Resolved"],
     ]
     story.append(make_table(
         ["Blocker", "Severity", "Workaround", "Status"],
@@ -1066,6 +1131,8 @@ def build_pdf():
         hdr_color=C_RED,
     ))
 
+    section_break()
+
     # ──────────────────────────────────────────────
     # SECTION 09 — DELIVERABLES
     # ──────────────────────────────────────────────
@@ -1073,12 +1140,11 @@ def build_pdf():
 
     subsection("Submitted Artifacts", color=C_GREEN)
     deliverables = [
-        ["Live Application",          "See cover page link",                                "✅ Delivered"],
-        ["GitHub Repository",         "See cover page link",                                "✅ Delivered"],
+        ["Live Application",          "https://shivam-multi-agent-router.streamlit.app",   "✅ Delivered"],
+        ["GitHub Repository",         "https://github.com/shivamabes/multi-agent-router",  "✅ Delivered"],
         ["Project Documentation PDF", "This document",                                      "✅ Delivered"],
         ["README.md",                 "Installation, usage, architecture overview",         "✅ Delivered"],
-        ["GCP Integration Roadmap",   "additional/GCP_INTEGRATION_ROADMAP.md",             "✅ Delivered"],
-        ["Experimental Scripts",      "additional/* (BigQuery setup, logprobs test, smoke test)", "✅ Delivered"],
+        ["GCP Integration Roadmap",   "10 GCP services mapped to current components",      "✅ Delivered"],
         ["Presentation (PPT)",        "16-slide technical presentation",                   "✅ Delivered"],
         ["Completed Checklist PDF",   "Internship_Project_Checklist_<TeamName>.pdf",       "✅ Delivered"],
     ]
@@ -1093,13 +1159,11 @@ def build_pdf():
     subsection("Code Files Delivered", color=C_ACCENT)
     code_files = [
         ["app.py",           "Streamlit UI + full pipeline orchestration"],
-        ["router.py",        "Query classification — Vertex Gemini 2.5 Flash-Lite"],
-        ["agents.py",        "Sub-agent execution + ordered Vertex fallback"],
+        ["router.py",        "Query classification — LLaMA 8B"],
+        ["agents.py",        "Sub-agent execution + 3-level fallback"],
         ["guardrails.py",    "3-layer safety system"],
         ["analytics.py",     "CSV logging + cost computation"],
-        ["config.py",        "Vertex model registry + upgrade paths + guardrail config"],
-        ["additional/setup_bigquery.py", "Optional analytics migration helper"],
-        ["additional/anthropic_vertex_smoke_test.py", "Permission-gated Vertex smoke test"],
+        ["config.py",        "Model registry + upgrade paths + guardrail config"],
         ["requirements.txt", "All Python dependencies pinned"],
     ]
     story.append(make_table(
@@ -1116,14 +1180,14 @@ def build_pdf():
 
     subsection("10.1 Key Performance Metrics (Live App)", color=C_ACCENT)
     kpi_rows = [
-        ["Max Cost Reduction",    "92%",      "Lite vs Pro-A on simple query"],
+        ["Max Cost Reduction",    "94%",      "Lite vs Pro-A on simple query"],
         ["Average Cost Savings",  "48%",      "Observed in live test session"],
-        ["Uptime via Fallback",   "99.8%",    "Multi-step fallback design"],
-        ["Models Integrated",     "6",        "All on Vertex AI Gemini 2.5 family"],
+        ["Uptime via Fallback",   "99.8%",    "3-level fallback design"],
+        ["Models Integrated",     "6",        "Across Groq + Google Gemini"],
         ["Agents Implemented",    "3",        "Coding, Math, Reasoning"],
         ["Guardrail Layers",      "3",        "Input, Output, System"],
         ["Upgrade Options",       "Up to 5",  "Per query from any starting model"],
-        ["Analytics Columns",     "14",       "Per-query CSV log columns"],
+        ["Analytics Columns",     "18",       "Per-query CSV log columns"],
     ]
     story.append(make_table(
         ["Metric", "Value", "Notes"],
@@ -1135,12 +1199,12 @@ def build_pdf():
 
     subsection("10.2 Cost Comparison Table", color=C_GREEN)
     cost_rows = [
-        ["Gemini 2.5 Flash-Lite (lite_a)", "Lite",     "$0.000050", "300 ms",  "92%"],
-        ["Gemini 2.5 Flash-Lite (lite_b)", "Lite",     "$0.000050", "350 ms",  "92%"],
-        ["Gemini 2.5 Flash (standard_a)",  "Standard", "$0.000150", "400 ms",  "76%"],
-        ["Gemini 2.5 Flash (standard_b)",  "Standard", "$0.000150", "450 ms",  "76%"],
-        ["Gemini 2.5 Pro (pro_a)",         "Pro",      "$0.000625", "2000 ms", "Baseline"],
-        ["Gemini 2.5 Pro (pro_b)",         "Pro",      "$0.000625", "2200 ms", "0%"],
+        ["Gemini 2.5 Flash-Lite",   "Lite",     "$0.000025",  "400 ms",  "94%"],
+        ["GPT-OSS 20B",             "Lite",     "$0.0000375", "500 ms",  "91%"],
+        ["LLaMA 3.1 8B",            "Standard", "$0.00005",   "500 ms",  "88%"],
+        ["GPT-OSS 120B",            "Standard", "$0.000075",  "800 ms",  "81%"],
+        ["LLaMA 3.3 70B (Pro A)",   "Pro",      "$0.0004",    "2500 ms", "Baseline"],
+        ["Gemini 2.5 Flash (Pro B)","Pro",      "$0.00025",   "2000 ms", "38%"],
     ]
     story.append(make_table(
         ["Model", "Tier", "Cost / 500 tokens", "Latency", "Saving vs Pro A"],
@@ -1151,11 +1215,13 @@ def build_pdf():
     sp(0.2)
 
     card([
-        "Observed Analytics (Live App Test Session, April 2026):",
+        "Observed Analytics (Live App Test Session, April 2025):",
         "  Queries: 6  |  Total Cost: $0.0030  |  Avg Latency: 3886 ms",
         "  Cost Saved: 48%  |  Fallbacks: 0  |  Distribution: 50% Pro, 33% Lite, 17% Std",
         "  Agent Split: 50% Coding, 50% Math",
     ], color=C_GREEN)
+
+    section_break()
 
     # ──────────────────────────────────────────────
     # SECTION 11 — FUTURE SCOPE
@@ -1190,16 +1256,16 @@ def build_pdf():
     sp(0.1)
     subsection("GCP Production Migration", color=C_GREEN)
     gcp_migration = [
-        ["query_logs.csv",       "BigQuery",             "Streaming inserts, SQL analytics, Looker dashboards"],
-        ["Sidebar runtime stats", "Cloud Monitoring",      "Alerts on error rate, cost spikes, latency regressions"],
-        ["Streamlit Cloud",      "Cloud Run",            "Auto-scale 0→1000+ instances with container deployment"],
-        ["Local ADC on laptops", "Service Accounts / WIF", "Controlled production identity and least-privilege auth"],
-        ["Manual smoke scripts", "Cloud Build scheduler", "Automated periodic health checks for critical paths"],
-        ["Future session files", "Firestore",            "Durable multi-turn conversation memory"],
-        ["Future semantic cache", "Redis Memorystore",    "Low-latency cache for repeated or similar queries"],
+        ["sessions/*.json",    "Firestore",         "Real-time, multi-user, survives restarts"],
+        ["query_cache.json",   "Redis Memorystore", "TTL per tier, auto-eviction"],
+        ["query_logs.csv",     "BigQuery",          "Streaming inserts, SQL, Looker Studio"],
+        ["os.getenv(API keys)","Secret Manager",    "Encrypted, audited, versioned"],
+        ["Streamlit Cloud",    "Cloud Run",         "Auto-scale 0→1000+ instances"],
+        ["External APIs",      "Vertex AI",         "No rate limits, in-network, SLA-backed"],
+        ["Plotly sidebar",     "Cloud Monitoring",  "Alerts on cost spike, fallback surge"],
     ]
     story.append(make_table(
-        ["Current (v2.0)", "GCP Next Step", "Benefit"],
+        ["Current (Prototype)", "GCP Equivalent", "Benefit"],
         gcp_migration,
         col_widths=[4.5*cm, 4.5*cm, 7.7*cm],
         hdr_color=C_ACCENT2,
@@ -1215,7 +1281,7 @@ def build_pdf():
         "Working with Amritesh was highly productive throughout this internship. "
         "His suggestion to think about GCP production migration early — even before "
         "the prototype was complete — was particularly valuable. It helped us write "
-        "a proper migration roadmap (additional/GCP_INTEGRATION_ROADMAP.md) that maps every "
+        "a proper migration roadmap (GCP_Integration_roadmap.md) that maps every "
         "local component to its GCP equivalent service, which demonstrates real "
         "production thinking beyond just prototype code."
     )
@@ -1252,9 +1318,9 @@ def build_pdf():
         "This internship taught me that building AI systems is not just about "
         "calling LLM APIs — it is about designing for failure, cost, and scale "
         "from day one. The most important insight was understanding that a simple "
-        "routing layer can reduce LLM costs by up to 92% without any quality loss "
-        "for simple queries. I learned Vertex AI native integration, Google Cloud "
-        "authentication via ADC, Streamlit advanced patterns (session_state, cache_data, "
+        "routing layer can reduce LLM costs by up to 94% without any quality loss "
+        "for simple queries. I learned LiteLLM multi-provider integration, Groq "
+        "and Gemini APIs, Streamlit advanced patterns (session_state, cache_data, "
         "status), guardrail design for production AI safety, and how to document "
         "complex systems at a level suitable for production handoff."
     )
@@ -1278,7 +1344,7 @@ def build_pdf():
         "Request GCP permissions (Cloud Run, BigQuery, Vertex AI) on Day 1",
         "Implement automated testing with pytest from the start",
         "Set up CI/CD pipeline (GitHub Actions) for automatic deployment",
-        "Productionize BigQuery logging and Cloud Run deployment earlier",
+        "Add Vertex AI from the beginning instead of planning it as future scope",
         "Build the analytics dashboard earlier to validate routing decisions with data",
     ]
     for d in differently:
@@ -1287,6 +1353,14 @@ def build_pdf():
     sp(0.3)
     hr(color=C_ACCENT)
     sp(0.2)
+
+    # Final links card
+    card([
+        "Live Application: https://shivam-multi-agent-router.streamlit.app",
+        "GitHub Repository: https://github.com/shivamabes/multi-agent-router",
+        "Team: Shivam & Jay Kishan  |  Mentor: Amritesh Kumar Sinha",
+        "GCP Technology For Topaz Fabric  |  April 2025",
+    ], color=C_ACCENT)
 
     # ──────────────────────────────────────────────
     # BUILD PDF
