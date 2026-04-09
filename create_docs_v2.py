@@ -224,8 +224,8 @@ class CoverPage(Flowable):
         # Info table rows
         rows = [
             ("Team Name",      "GCP Technology For Topaz Fabric"),
-            ("Intern 1",       "Shivam"),
-            ("Intern 2",       "Jay Kishan"),
+            ("Intern 1",       "Shivam (585817)"),
+            ("Intern 2",       "Jay Kishan (585739)"),
             ("Mentor",         "Amritesh Kumar Sinha"),
             ("Reviewers",      "Chetana Amancharla  |  Amritesh Kumar Sinha"),
             ("Submission",     "April 9, 2026"),
@@ -240,18 +240,7 @@ class CoverPage(Flowable):
             c.drawString(4.5 * cm, ry, val)
             ry -= 0.6 * cm
 
-        # Live link
-        c.setFillColor(C_ACCENT2)
-        c.roundRect(1.0*cm, h - 13.0*cm, w - 2.0*cm, 0.65*cm,
-                    5, fill=1, stroke=0)
-        c.setFillColor(C_WHITE)
-        c.setFont("Helvetica-Bold", 9)
-        c.drawString(1.3*cm, h - 12.75*cm,
-                     "Live App:")
-        c.setFillColor(C_ACCENT)
-        c.setFont("Helvetica", 9)
-        c.drawString(3.2*cm, h - 12.75*cm,
-                     "https://shivam-multi-agent-router.streamlit.app")
+       
 
         # GitHub link
         c.setFillColor(C_CARD)
@@ -263,7 +252,7 @@ class CoverPage(Flowable):
         c.setFillColor(C_ACCENT)
         c.setFont("Helvetica", 9)
         c.drawString(3.2*cm, h - 13.65*cm,
-                     "https://github.com/shivamabes/multi-agent-router")
+                     "https://github.com/jaykishan-2450/multi-llm-router-gcp")
 
         # Tech pills at bottom
         pills = ["Vertex AI", "Gemini 2.5", "Streamlit", "Guardrails", "Python 3.9+"]
@@ -1237,15 +1226,7 @@ def build_pdf():
         "feedback loop kept the project focused on what matters most: cost optimization, "
         "reliability, and observability."
     )
-    sp(0.1)
-
-    bold("Suggestions for Improvement:")
-    bul("Provision GCP service access (Cloud Run, BigQuery) at internship start, "
-        "not mid-way, to allow hands-on validation of production architecture.")
-    bul("A mid-internship architecture review session would help catch design "
-        "gaps earlier in the development cycle.")
-    bul("Define a clear cloud budget allocation so interns can run small-scale "
-        "GCP deployments for learning purposes.")
+    
 
     sp(0.2)
     subsection("12.2 Feedback for Internship Program", color=C_ACCENT)
