@@ -10,8 +10,8 @@ import os
 import vertexai
 
 # ── Vertex AI Configuration ──
-VERTEX_PROJECT_ID = os.getenv("VERTEX_PROJECT_ID", "cs-pcsgcppg103-prj-playgnd-llm")
-VERTEX_LOCATION = os.getenv("VERTEX_LOCATION", "us-central1")
+VERTEX_PROJECT_ID = os.getenv("VERTEX_PROJECT_ID")
+VERTEX_LOCATION = os.getenv("VERTEX_LOCATION")
 
 try:
     import streamlit as st

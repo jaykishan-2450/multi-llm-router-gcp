@@ -5,7 +5,7 @@ Run: python setup_bigquery.py
 
 from google.cloud import bigquery
 
-PROJECT_ID = "cs-pcsgcppg103-prj-playgnd-llm"
+PROJECT_ID = ""
 DATASET_ID = "analytics"
 TABLE_ID = "query_logs"
 

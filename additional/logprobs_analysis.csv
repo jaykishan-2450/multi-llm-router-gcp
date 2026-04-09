@@ -1,0 +1,6 @@
+timestamp,query,agent,complexity,confidence,logprob_top,logprob_margin,logprob_entropy,tier,routing_latency_ms,reason
+2026-04-07T04:54:23.272413,What is 25 * 48?,math,simple,0.5,0.0,0.0,0.0,lite,6380.6,This is a straightforward multiplication calculation.
+2026-04-07T04:54:23.272454,Write a Python function to check if a number is prime,coding,medium,0.5,0.0,0.0,0.0,standard,2088.2,"The user wants a Python function to implement an algorithm for checking primality, which involves multiple steps and logical conditions."
+2026-04-07T04:54:23.272480,Design a thread-safe LRU cache,coding,complex,0.5,0.0,0.0,0.0,pro,2295.9,"Designing a thread-safe LRU cache requires understanding concurrency primitives, data structures, and algorithms, which falls under coding and is a complex task."
+2026-04-07T04:54:23.272498,Compare SQL vs NoSQL for ecommerce,reasoning,medium,0.5,0.0,0.0,0.0,standard,1117.2,"The user is asking for a comparison between two database types (SQL and NoSQL) in a specific context (ecommerce). This requires analyzing the characteristics of each and how they apply to the needs of an ecommerce platform, which involves multiple factors and considerations."
+2026-04-07T04:54:23.272519,Capital of France?,reasoning,simple,0.5,0.0,0.0,0.0,lite,1856.1,This is a straightforward factual question requiring a single piece of information.
